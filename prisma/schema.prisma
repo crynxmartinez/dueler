@@ -1,0 +1,354 @@
+// Dueler - Card Game Builder Platform
+// Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// USER & AUTH (NextAuth.js)
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  password      String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  games         Game[]
+  decks         Deck[]
+  matchesAsP1   Match[]   @relation("Player1")
+  matchesAsP2   Match[]   @relation("Player2")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// GAME
+// ============================================
+
+model Game {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  slug        String   @unique
+  imageUrl    String?
+  isPublic    Boolean  @default(false)
+  version     Int      @default(1)
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  owner       User        @relation(fields: [ownerId], references: [id])
+
+  cards       Card[]
+  cardSets    CardSet[]
+  keywords    Keyword[]
+  classes     GameClass[]
+  effects     Effect[]
+  ruleCards   RuleCard[]
+  boardLayout BoardLayout?
+  decks       Deck[]
+  matches     Match[]
+
+  @@index([ownerId])
+  @@index([isPublic])
+}
+
+// ============================================
+// CARD SETS / EXPANSIONS
+// ============================================
+
+model CardSet {
+  id          String    @id @default(cuid())
+  name        String
+  code        String
+  description String?
+  imageUrl    String?
+  releaseDate DateTime?
+  isActive    Boolean   @default(true)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  gameId      String
+  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  cards       Card[]
+
+  @@unique([gameId, code])
+}
+
+// ============================================
+// GAME CLASSES
+// ============================================
+
+model GameClass {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  gameId      String
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, name])
+}
+
+// ============================================
+// KEYWORDS
+// ============================================
+
+model Keyword {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  hasValue    Boolean  @default(false)
+  effectFlow  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  gameId      String
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, name])
+}
+
+// ============================================
+// CARDS
+// ============================================
+
+model Card {
+  id            String     @id @default(cuid())
+  name          String
+  type          CardType
+  rarity        CardRarity @default(COMMON)
+  cost          Int        @default(0)
+  attack        Int?
+  health        Int?
+  description   String?
+  flavorText    String?
+  imageUrl      String?
+  classes       String[]   @default([])
+  keywords      Json       @default("[]")
+  properties    Json       @default("{}")
+  effectFlow    Json?
+  isCollectible Boolean    @default(true)
+  isToken       Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  gameId        String
+  game          Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  setId         String?
+  set           CardSet?   @relation(fields: [setId], references: [id])
+
+  deckCards     DeckCard[]
+
+  @@index([gameId, type])
+  @@index([gameId, rarity])
+}
+
+enum CardType {
+  HERO
+  UNIT
+  SPELL
+  EQUIP
+  ADAPT
+  TWIST
+  TOKEN
+}
+
+enum CardRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+// ============================================
+// EFFECTS (Reusable Effect Templates)
+// ============================================
+
+model Effect {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  flowData    Json
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  gameId      String
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// RULE CARDS (Game Engine Rules)
+// ============================================
+
+model RuleCard {
+  id          String       @id @default(cuid())
+  name        String
+  category    RuleCategory
+  description String?
+  flowData    Json
+  order       Int          @default(0)
+  isEnabled   Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  gameId      String
+  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, category])
+}
+
+enum RuleCategory {
+  INIT
+  PER_TURN
+  COMBAT
+  DAMAGE
+  CARD_PLAY
+  ELIGIBILITY
+  WIN_LOSE
+  KEYWORDS
+  CUSTOM
+}
+
+// ============================================
+// BOARD LAYOUT
+// ============================================
+
+model BoardLayout {
+  id          String   @id @default(cuid())
+  zones       Json
+  background  String?
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  gameId      String   @unique
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// DECKS
+// ============================================
+
+model Deck {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  heroId      String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  gameId      String
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  cards       DeckCard[]
+
+  @@index([userId])
+  @@index([gameId])
+}
+
+model DeckCard {
+  id       String @id @default(cuid())
+  quantity Int    @default(1)
+
+  deckId   String
+  deck     Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  cardId   String
+  card     Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, cardId])
+}
+
+// ============================================
+// MATCHES (Game Sessions)
+// ============================================
+
+model Match {
+  id            String      @id @default(cuid())
+  status        MatchStatus @default(WAITING)
+  state         Json        @default("{}")
+  turnNumber    Int         @default(0)
+  currentPlayer Int         @default(1)
+  winnerId      String?
+  isTestMode    Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  gameId        String
+  game          Game        @relation(fields: [gameId], references: [id])
+
+  player1Id     String
+  player1       User        @relation("Player1", fields: [player1Id], references: [id])
+
+  player2Id     String?
+  player2       User?       @relation("Player2", fields: [player2Id], references: [id])
+
+  @@index([gameId, status])
+}
+
+enum MatchStatus {
+  WAITING
+  MULLIGAN
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
