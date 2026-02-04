@@ -21,12 +21,18 @@ import {
   StackDisplayType,
   MirrorType,
   ZoneLayer,
+  RowAlignment,
+  RowZOrder,
+  InfoDisplayType,
   ZONE_TYPE_INFO,
   ZONE_OWNER_INFO,
   ZONE_VISIBILITY_INFO,
   STACK_DISPLAY_INFO,
   MIRROR_TYPE_INFO,
   ZONE_LAYER_INFO,
+  ROW_ALIGNMENT_INFO,
+  ROW_ZORDER_INFO,
+  INFO_DISPLAY_TYPE_INFO,
 } from "@/types/board"
 
 interface ZonePropertiesPanelProps {
@@ -67,6 +73,19 @@ export function ZonePropertiesPanel({
               onChange={(e) => onUpdate({ name: e.target.value })}
               placeholder="Zone name"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags</Label>
+            <Input
+              id="tags"
+              value={(zone.tags || []).join(", ")}
+              onChange={(e) => onUpdate({ tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })}
+              placeholder="deck, draw_pile, player_deck"
+            />
+            <p className="text-xs text-muted-foreground">
+              Comma-separated tags for referencing in rules/effects
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -217,6 +236,7 @@ export function ZonePropertiesPanel({
                 </p>
               </div>
 
+              {/* CARD_STACK specific */}
               {zone.type === "CARD_STACK" && (
                 <div className="space-y-2">
                   <Label>Stack Display</Label>
@@ -239,6 +259,126 @@ export function ZonePropertiesPanel({
                     {STACK_DISPLAY_INFO[zone.stackDisplay || "clickable"].description}
                   </p>
                 </div>
+              )}
+
+              {/* CARD_GRID specific */}
+              {zone.type === "CARD_GRID" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Row Alignment</Label>
+                    <Select
+                      value={zone.rowAlignment || "left"}
+                      onValueChange={(v) => onUpdate({ rowAlignment: v as RowAlignment })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(ROW_ALIGNMENT_INFO).map(([type, info]) => (
+                          <SelectItem key={type} value={type}>
+                            {info.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {ROW_ALIGNMENT_INFO[zone.rowAlignment || "left"].description}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Z-Order</Label>
+                    <Select
+                      value={zone.rowZOrder || "default"}
+                      onValueChange={(v) => onUpdate({ rowZOrder: v as RowZOrder })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(ROW_ZORDER_INFO).map(([type, info]) => (
+                          <SelectItem key={type} value={type}>
+                            {info.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {ROW_ZORDER_INFO[zone.rowZOrder || "default"].description}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* INFO_DISPLAY specific */}
+              {zone.type === "INFO_DISPLAY" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Display Type</Label>
+                    <Select
+                      value={zone.infoType || "player_property"}
+                      onValueChange={(v) => onUpdate({ infoType: v as InfoDisplayType })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(INFO_DISPLAY_TYPE_INFO).map(([type, info]) => (
+                          <SelectItem key={type} value={type}>
+                            {info.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {INFO_DISPLAY_TYPE_INFO[zone.infoType || "player_property"].description}
+                    </p>
+                  </div>
+                  {(zone.infoType === "game_property" || zone.infoType === "player_property") && (
+                    <div className="space-y-2">
+                      <Label>Property Name</Label>
+                      <Input
+                        value={zone.infoProperty || ""}
+                        onChange={(e) => onUpdate({ infoProperty: e.target.value })}
+                        placeholder="e.g., health, mana, turn_count"
+                      />
+                    </div>
+                  )}
+                  {zone.infoType === "custom_text" && (
+                    <div className="space-y-2">
+                      <Label>Custom Text</Label>
+                      <Input
+                        value={zone.infoText || ""}
+                        onChange={(e) => onUpdate({ infoText: e.target.value })}
+                        placeholder="Text to display"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* BUTTON specific */}
+              {zone.type === "BUTTON" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Button Text</Label>
+                    <Input
+                      value={zone.buttonText || ""}
+                      onChange={(e) => onUpdate({ buttonText: e.target.value })}
+                      placeholder="e.g., End Turn, Draw Card"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Action ID</Label>
+                    <Input
+                      value={zone.buttonAction || ""}
+                      onChange={(e) => onUpdate({ buttonAction: e.target.value })}
+                      placeholder="e.g., end_turn, draw_card"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Action to trigger when clicked (used in rules)
+                    </p>
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">

@@ -7,6 +7,11 @@ export type StackDisplayType = "clickable" | "top_only" | "face_down"
 export type MirrorType = "none" | "vertical" | "horizontal" | "both"
 export type ZoneLayer = "map" | "ui"
 
+// Type-specific properties
+export type RowAlignment = "left" | "center" | "right" | "top" | "center_vertical" | "bottom"
+export type RowZOrder = "default" | "reverse"
+export type InfoDisplayType = "game_property" | "player_property" | "custom_text"
+
 export interface ZonePosition {
   x: number
   y: number
@@ -27,10 +32,28 @@ export interface Zone {
   capacity: number        // Max cards (-1 for unlimited)
   visibility: ZoneVisibility
   color?: string          // Border/accent color
-  stackDisplay?: StackDisplayType  // How stack shows cards
   mirrorType?: MirrorType          // Mirror direction for opponent
   layer?: ZoneLayer                // Map (game) or UI layer
   linkedZoneId?: string            // ID of mirrored zone (auto-generated)
+  tags?: string[]                  // Tags for referencing in rules/effects
+  
+  // Type-specific properties
+  // CARD_STACK
+  stackDisplay?: StackDisplayType  // How stack shows cards
+  
+  // CARD_GRID (Row of Cards)
+  rowAlignment?: RowAlignment      // Card alignment in row
+  rowZOrder?: RowZOrder            // Z-order of cards
+  
+  // INFO_DISPLAY
+  infoType?: InfoDisplayType       // What info to display
+  infoProperty?: string            // Property name (e.g., "health", "mana")
+  infoText?: string                // Custom text content
+  
+  // BUTTON
+  buttonText?: string              // Text shown on button
+  buttonAction?: string            // Action ID to trigger
+  
   properties: Record<string, unknown>
 }
 
@@ -220,6 +243,26 @@ export const MIRROR_TYPE_INFO: Record<MirrorType, { label: string; description: 
 export const ZONE_LAYER_INFO: Record<ZoneLayer, { label: string; description: string }> = {
   map: { label: "Map (Game)", description: "Part of the game board" },
   ui: { label: "UI", description: "User interface element" },
+}
+
+export const ROW_ALIGNMENT_INFO: Record<RowAlignment, { label: string; description: string }> = {
+  left: { label: "Left", description: "Align cards to the left" },
+  center: { label: "Center", description: "Center cards horizontally" },
+  right: { label: "Right", description: "Align cards to the right" },
+  top: { label: "Top (Vertical)", description: "Align cards to the top" },
+  center_vertical: { label: "Center (Vertical)", description: "Center cards vertically" },
+  bottom: { label: "Bottom (Vertical)", description: "Align cards to the bottom" },
+}
+
+export const ROW_ZORDER_INFO: Record<RowZOrder, { label: string; description: string }> = {
+  default: { label: "Default", description: "Last cards have priority (on top)" },
+  reverse: { label: "Reverse", description: "First cards have priority (on top)" },
+}
+
+export const INFO_DISPLAY_TYPE_INFO: Record<InfoDisplayType, { label: string; description: string }> = {
+  game_property: { label: "Game Property", description: "Display a game-wide property (turn count, etc.)" },
+  player_property: { label: "Player Property", description: "Display a player property (health, mana, etc.)" },
+  custom_text: { label: "Custom Text", description: "Display custom static text" },
 }
 
 export const ZONE_OWNER_INFO: Record<ZoneOwner, { label: string; color: string }> = {
