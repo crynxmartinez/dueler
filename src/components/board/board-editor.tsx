@@ -324,11 +324,13 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
                 height: settings.canvasHeight,
               }}
             >
-              {/* Center line */}
-              <div
-                className="absolute left-0 right-0 border-t border-dashed border-muted-foreground/30"
-                style={{ top: settings.canvasHeight / 2 }}
-              />
+              {/* Center line - only show when mirror is enabled */}
+              {mirrorEnabled && (
+                <div
+                  className="absolute left-0 right-0 border-t-2 border-dashed border-muted-foreground/50"
+                  style={{ top: settings.canvasHeight / 2 }}
+                />
+              )}
 
               {zones.map((zone) => (
                 <ZoneItem
