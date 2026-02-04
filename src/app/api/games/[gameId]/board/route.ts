@@ -7,13 +7,26 @@ import { z } from "zod"
 const zoneSchema = z.object({
   id: z.string(),
   name: z.string(),
-  type: z.enum(["CARD_STACK", "CARD_GRID", "SINGLE_CARD", "INFO_DISPLAY"]),
+  type: z.enum(["CARD_STACK", "CARD_GRID", "SINGLE_CARD", "INFO_DISPLAY", "BUTTON"]),
   owner: z.enum(["player", "opponent", "neutral"]),
   position: z.object({ x: z.number(), y: z.number() }),
   size: z.object({ width: z.number(), height: z.number() }),
   capacity: z.number(),
   visibility: z.enum(["public", "private", "owner"]),
-  mirror: z.boolean(),
+  color: z.string().optional(),
+  mirrorType: z.enum(["none", "vertical", "horizontal", "both"]).optional(),
+  layer: z.enum(["map", "ui"]).optional(),
+  linkedZoneId: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  // Type-specific properties
+  stackDisplay: z.enum(["clickable", "top_only", "face_down"]).optional(),
+  rowAlignment: z.enum(["left", "center", "right", "top", "center_vertical", "bottom"]).optional(),
+  rowZOrder: z.enum(["default", "reverse"]).optional(),
+  infoType: z.enum(["game_property", "player_property", "custom_text"]).optional(),
+  infoProperty: z.string().optional(),
+  infoText: z.string().optional(),
+  buttonText: z.string().optional(),
+  buttonAction: z.string().optional(),
   properties: z.record(z.string(), z.unknown()),
 })
 
