@@ -130,7 +130,7 @@ export default function MyGamesPage() {
             <Card 
               key={game.id} 
               className="hover:border-primary transition-colors cursor-pointer group"
-              onClick={() => router.push(`/dashboard/games/${game.id}`)}
+              onClick={() => router.push(`/games/${game.id}`)}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
@@ -153,7 +153,7 @@ export default function MyGamesPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={(e) => {
                         e.stopPropagation()
-                        router.push(`/dashboard/games/${game.id}`)
+                        router.push(`/games/${game.id}`)
                       }}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit

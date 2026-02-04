@@ -36,7 +36,7 @@ export default function NewGamePage() {
       if (res.ok) {
         const game = await res.json()
         toast.success("Game created!")
-        router.push(`/dashboard/games/${game.id}`)
+        router.push(`/games/${game.id}`)
       } else {
         const data = await res.json()
         toast.error(data.error || "Failed to create game")
