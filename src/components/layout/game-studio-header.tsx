@@ -15,6 +15,7 @@ import { usePathname } from "next/navigation"
 interface GameStudioHeaderProps {
   game: {
     id: string
+    slug: string
     name: string
   }
 }
@@ -26,7 +27,7 @@ export function GameStudioHeader({ game }: GameStudioHeaderProps) {
     const segments = pathname.split("/")
     const lastSegment = segments[segments.length - 1]
     
-    if (lastSegment === game.id) return "Overview"
+    if (lastSegment === game.id || lastSegment === game.slug) return "Overview"
     
     const titles: Record<string, string> = {
       cards: "Cards",
@@ -51,11 +52,11 @@ export function GameStudioHeader({ game }: GameStudioHeaderProps) {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/games">Games</BreadcrumbLink>
+            <BreadcrumbLink href="/dashboard/games">My Games</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href={`/dashboard/games/${game.id}`}>
+            <BreadcrumbLink href={`/games/${game.slug}`}>
               {game.name}
             </BreadcrumbLink>
           </BreadcrumbItem>

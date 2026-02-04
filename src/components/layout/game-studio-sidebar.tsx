@@ -41,6 +41,7 @@ import {
 interface GameStudioSidebarProps {
   game: {
     id: string
+    slug: string
     name: string
     isPublic: boolean
     _count?: {
@@ -57,7 +58,7 @@ interface GameStudioSidebarProps {
 
 export function GameStudioSidebar({ game }: GameStudioSidebarProps) {
   const pathname = usePathname()
-  const baseUrl = `/dashboard/games/${game.id}`
+  const baseUrl = `/games/${game.slug}`
 
   const counts = game._count || {
     cards: 0,
