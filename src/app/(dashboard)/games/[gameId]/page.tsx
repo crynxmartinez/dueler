@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,13 +26,14 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
   const session = await auth()
   const { gameId } = await params
 
-  const gameBase = await findGameBySlugOrId(gameId)
-  if (!gameBase) {
-    notFound()
-  }
-
-  const game = await prisma.game.findUnique({
-    where: { id: gameBase.id },
+  // Try to find by slug first, then by ID
+  const game = await prisma.game.findFirst({
+    where: {
+      OR: [
+        { slug: gameId },
+        { id: gameId },
+      ],
+    },
     include: {
       _count: {
         select: {
