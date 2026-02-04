@@ -226,6 +226,41 @@ export function ZonePropertiesPanel({
               </div>
             </div>
           </div>
+
+          <div className="border-t pt-4">
+            <h4 className="font-medium text-sm mb-3">Appearance</h4>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="color">Zone Color</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="color"
+                    type="color"
+                    value={zone.color || "#22c55e"}
+                    onChange={(e) => onUpdate({ color: e.target.value })}
+                    className="w-12 h-9 p-1 cursor-pointer"
+                  />
+                  <Input
+                    value={zone.color || "#22c55e"}
+                    onChange={(e) => onUpdate({ color: e.target.value })}
+                    placeholder="#22c55e"
+                    className="flex-1"
+                  />
+                </div>
+                <div className="flex gap-1 mt-2">
+                  {["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#6b7280"].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className="w-6 h-6 rounded border-2 border-transparent hover:border-white transition-colors"
+                      style={{ backgroundColor: c }}
+                      onClick={() => onUpdate({ color: c })}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </ScrollArea>
 

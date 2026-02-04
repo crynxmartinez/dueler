@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Save, Undo, Redo, Grid3X3, ZoomIn, ZoomOut, Maximize, LayoutTemplate } from "lucide-react"
+import { Save, Undo, Redo, Grid3X3, ZoomIn, ZoomOut, Maximize, LayoutTemplate, FlipVertical2 } from "lucide-react"
 import { ZonePalette } from "./zone-palette"
 import { ZonePropertiesPanel } from "./zone-properties-panel"
 import ZoneItem from "./zone-item"
@@ -163,9 +163,54 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
     setSelectedZoneId(null)
   }, [])
 
+  const handleMirrorZones = useCallback(() => {
+    // Get all player zones and create mirrored opponent zones
+    const playerZones = zones.filter((z) => z.owner === "player")
+    const canvasHeight = settings.canvasHeight
+
+    const mirroredZones: Zone[] = playerZones.map((zone) => ({
+      ...zone,
+      id: getZoneId(),
+      name: zone.name.replace(/^(Your |Player )/i, "Opponent "),
+      owner: "opponent" as const,
+      position: {
+        x: zone.position.x,
+        y: canvasHeight - zone.position.y - zone.size.height,
+      },
+    }))
+
+    setZones((prev) => {
+      // Remove existing opponent zones that were mirrored
+      const nonOpponentZones = prev.filter((z) => z.owner !== "opponent")
+      return [...nonOpponentZones, ...mirroredZones]
+    })
+  }, [zones, settings.canvasHeight])
+
+  const handleAddCustomZone = useCallback(
+    (template: Partial<Zone>) => {
+      const newZone: Zone = {
+        id: getZoneId(),
+        name: template.name || "Custom Zone",
+        type: template.type || "CARD_GRID",
+        owner: "player",
+        position: { x: 50, y: settings.canvasHeight / 2 },
+        size: template.size || { width: 100, height: 100 },
+        capacity: template.capacity ?? 7,
+        visibility: template.visibility || "public",
+        mirror: template.mirror ?? true,
+        color: template.color,
+        properties: {},
+      }
+
+      setZones((prev) => [...prev, newZone])
+      setSelectedZoneId(newZone.id)
+    },
+    [settings.canvasHeight]
+  )
+
   return (
     <div className="flex h-full w-full">
-      <ZonePalette onDragStart={handlePaletteDragStart} />
+      <ZonePalette onDragStart={handlePaletteDragStart} onAddCustomZone={handleAddCustomZone} />
 
       <div className="flex-1 flex flex-col">
         <div className="flex items-center justify-between px-4 py-2 border-b bg-card">
@@ -204,6 +249,16 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
               <Maximize className="h-4 w-4" />
             </Button>
             <div className="w-px h-6 bg-border mx-1" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleMirrorZones}
+              title="Mirror player zones for opponent (Yu-Gi-Oh style)"
+            >
+              <FlipVertical2 className="h-4 w-4" />
+              Mirror
+            </Button>
             <Button
               variant="outline"
               size="sm"

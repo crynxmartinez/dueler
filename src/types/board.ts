@@ -24,6 +24,7 @@ export interface Zone {
   capacity: number        // Max cards (-1 for unlimited)
   visibility: ZoneVisibility
   mirror: boolean         // Auto-mirror for opponent
+  color?: string          // Border/accent color
   properties: Record<string, unknown>
 }
 

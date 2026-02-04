@@ -1,8 +1,28 @@
 "use client"
 
-import { Layers, LayoutGrid, Square, Info, GripVertical } from "lucide-react"
+import { useState } from "react"
+import { Layers, LayoutGrid, Square, Info, GripVertical, Plus } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { DEFAULT_ZONES, ZoneType, ZONE_TYPE_INFO } from "@/types/board"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { DEFAULT_ZONES, ZoneType, ZONE_TYPE_INFO, Zone } from "@/types/board"
 
 const ZONE_ICONS: Record<ZoneType, React.ElementType> = {
   CARD_STACK: Layers,
@@ -12,10 +32,40 @@ const ZONE_ICONS: Record<ZoneType, React.ElementType> = {
 }
 
 interface ZonePaletteProps {
-  onDragStart: (event: React.DragEvent, zoneTemplate: typeof DEFAULT_ZONES[0]) => void
+  onDragStart: (event: React.DragEvent, zoneTemplate: Partial<Zone>) => void
+  onAddCustomZone?: (zone: Partial<Zone>) => void
 }
 
-export function ZonePalette({ onDragStart }: ZonePaletteProps) {
+export function ZonePalette({ onDragStart, onAddCustomZone }: ZonePaletteProps) {
+  const [showCustomDialog, setShowCustomDialog] = useState(false)
+  const [customName, setCustomName] = useState("")
+  const [customType, setCustomType] = useState<ZoneType>("CARD_GRID")
+  const [customColor, setCustomColor] = useState("#22c55e")
+  const [customWidth, setCustomWidth] = useState(100)
+  const [customHeight, setCustomHeight] = useState(100)
+
+  const handleCreateCustom = () => {
+    if (!customName.trim()) return
+    
+    const customZone: Partial<Zone> = {
+      name: customName,
+      type: customType,
+      size: { width: customWidth, height: customHeight },
+      capacity: customType === "INFO_DISPLAY" ? 0 : customType === "SINGLE_CARD" ? 1 : 7,
+      visibility: "public",
+      mirror: true,
+      color: customColor,
+    }
+    
+    onAddCustomZone?.(customZone)
+    setShowCustomDialog(false)
+    setCustomName("")
+    setCustomType("CARD_GRID")
+    setCustomColor("#22c55e")
+    setCustomWidth(100)
+    setCustomHeight(100)
+  }
+
   return (
     <div className="w-64 border-r bg-card flex flex-col h-full">
       <div className="p-3 border-b">
@@ -48,7 +98,110 @@ export function ZonePalette({ onDragStart }: ZonePaletteProps) {
           })}
         </div>
 
-        <div className="p-3 border-t mt-2">
+        <div className="p-3 border-t">
+          <Dialog open={showCustomDialog} onOpenChange={setShowCustomDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full gap-2">
+                <Plus className="h-4 w-4" />
+                Create Custom Zone
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Custom Zone</DialogTitle>
+                <DialogDescription>
+                  Create a custom zone with your own settings
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="custom-name">Zone Name</Label>
+                  <Input
+                    id="custom-name"
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="My Custom Zone"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Zone Type</Label>
+                  <Select value={customType} onValueChange={(v) => setCustomType(v as ZoneType)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(ZONE_TYPE_INFO).map(([type, info]) => (
+                        <SelectItem key={type} value={type}>
+                          {info.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="custom-width">Width</Label>
+                    <Input
+                      id="custom-width"
+                      type="number"
+                      min={40}
+                      value={customWidth}
+                      onChange={(e) => setCustomWidth(parseInt(e.target.value) || 100)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="custom-height">Height</Label>
+                    <Input
+                      id="custom-height"
+                      type="number"
+                      min={40}
+                      value={customHeight}
+                      onChange={(e) => setCustomHeight(parseInt(e.target.value) || 100)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="custom-color">Zone Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="custom-color"
+                      type="color"
+                      value={customColor}
+                      onChange={(e) => setCustomColor(e.target.value)}
+                      className="w-12 h-9 p-1 cursor-pointer"
+                    />
+                    <Input
+                      value={customColor}
+                      onChange={(e) => setCustomColor(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  <div className="flex gap-1 mt-2">
+                    {["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#6b7280"].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className="w-6 h-6 rounded border-2 border-transparent hover:border-white transition-colors"
+                        style={{ backgroundColor: c }}
+                        onClick={() => setCustomColor(c)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowCustomDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateCustom} disabled={!customName.trim()}>
+                  Add to Canvas
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="p-3 border-t">
           <h4 className="font-medium text-xs text-muted-foreground uppercase tracking-wide mb-2">
             Zone Types
           </h4>

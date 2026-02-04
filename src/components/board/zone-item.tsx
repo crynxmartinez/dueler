@@ -46,8 +46,8 @@ function ZoneItem({
         top: zone.position.y,
         width: zone.size.width,
         height: zone.size.height,
-        borderColor: ownerInfo.color,
-        backgroundColor: `${ownerInfo.color}10`,
+        borderColor: zone.color || ownerInfo.color,
+        backgroundColor: `${zone.color || ownerInfo.color}15`,
       }}
       onClick={(e) => {
         e.stopPropagation()
@@ -58,7 +58,7 @@ function ZoneItem({
       onDrag={onDrag}
       onDragEnd={onDragEnd}
     >
-      <Icon className="h-5 w-5 mb-1" style={{ color: ownerInfo.color }} />
+      <Icon className="h-5 w-5 mb-1" style={{ color: zone.color || ownerInfo.color }} />
       <span className="text-xs font-medium text-center px-1 truncate w-full">
         {zone.name}
       </span>
