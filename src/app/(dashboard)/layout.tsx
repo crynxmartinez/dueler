@@ -1,8 +1,5 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { DashboardHeader } from "@/components/layout/dashboard-header"
 
 export default async function DashboardLayout({
   children,
@@ -15,15 +12,6 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar user={session.user} />
-        <div className="flex flex-1 flex-col">
-          <DashboardHeader user={session.user} />
-          <main className="flex-1 p-6">{children}</main>
-        </div>
-      </div>
-    </SidebarProvider>
-  )
+  // Just pass through - individual pages/layouts handle their own UI
+  return <>{children}</>
 }
