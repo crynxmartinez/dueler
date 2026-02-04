@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { createInitialGameState } from "@/lib/game-engine"
 import { Zone } from "@/types/board"
 
@@ -17,9 +18,14 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const game = await findGameBySlugOrId(gameId)
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 })
+    }
+
     const matches = await prisma.match.findMany({
       where: {
-        gameId,
+        gameId: game.id,
         OR: [
           { player1Id: session.user.id },
           { player2Id: session.user.id },
@@ -52,8 +58,13 @@ export async function POST(request: Request, { params }: RouteParams) {
     const { isTestMode = true } = body
 
     // Get game with all necessary data
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
+    const game = await prisma.game.findFirst({
+      where: {
+        OR: [
+          { slug: gameId },
+          { id: gameId },
+        ],
+      },
       include: {
         cards: true,
         boardLayout: true,
@@ -78,7 +89,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Create initial game state
     const initialState = createInitialGameState({
       matchId: "", // Will be set after match creation
-      gameId,
+      gameId: game.id,
       player1Id,
       player1Name: session.user.name || "Player 1",
       player2Id: player2Id || "waiting",
@@ -110,7 +121,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Create match in database
     const match = await prisma.match.create({
       data: {
-        gameId,
+        gameId: game.id,
         player1Id,
         player2Id,
         isTestMode,

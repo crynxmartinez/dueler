@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { z } from "zod"
 
 const updateEffectSchema = z.object({
@@ -38,7 +39,8 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     })
 
-    if (!effect || effect.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!effect || !game || effect.gameId !== game.id) {
       return NextResponse.json({ error: "Effect not found" }, { status: 404 })
     }
 
@@ -70,7 +72,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       include: { game: { select: { ownerId: true } } },
     })
 
-    if (!existingEffect || existingEffect.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!existingEffect || !game || existingEffect.gameId !== game.id) {
       return NextResponse.json({ error: "Effect not found" }, { status: 404 })
     }
 
@@ -124,7 +127,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       include: { game: { select: { ownerId: true } } },
     })
 
-    if (!existingEffect || existingEffect.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!existingEffect || !game || existingEffect.gameId !== game.id) {
       return NextResponse.json({ error: "Effect not found" }, { status: 404 })
     }
 

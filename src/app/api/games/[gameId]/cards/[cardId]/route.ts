@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { z } from "zod"
 
 const updateCardSchema = z.object({
@@ -44,7 +45,8 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     })
 
-    if (!card || card.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!card || !game || card.gameId !== game.id) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 })
     }
 
@@ -76,7 +78,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       include: { game: { select: { ownerId: true } } },
     })
 
-    if (!existingCard || existingCard.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!existingCard || !game || existingCard.gameId !== game.id) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 })
     }
 
@@ -143,7 +146,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       include: { game: { select: { ownerId: true } } },
     })
 
-    if (!existingCard || existingCard.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!existingCard || !game || existingCard.gameId !== game.id) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 })
     }
 

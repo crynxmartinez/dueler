@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { z } from "zod"
 
 const zoneSchema = z.object({
@@ -40,10 +41,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: { ownerId: true },
-    })
+    const game = await findGameBySlugOrId(gameId)
 
     if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 })
@@ -54,7 +52,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     const boardLayout = await prisma.boardLayout.findUnique({
-      where: { gameId },
+      where: { gameId: game.id },
     })
 
     if (!boardLayout) {
@@ -92,10 +90,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: { ownerId: true },
-    })
+    const game = await findGameBySlugOrId(gameId)
 
     if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 })
@@ -118,14 +113,14 @@ export async function PUT(request: Request, { params }: RouteParams) {
     const { zones, background, settings } = validated.data
 
     const boardLayout = await prisma.boardLayout.upsert({
-      where: { gameId },
+      where: { gameId: game.id },
       update: {
         zones: zones as object[],
         background,
         settings: settings as object,
       },
       create: {
-        gameId,
+        gameId: game.id,
         zones: zones as object[],
         background,
         settings: settings as object,

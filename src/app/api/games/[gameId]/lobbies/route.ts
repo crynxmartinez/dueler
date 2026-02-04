@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 
 interface RouteParams {
   params: Promise<{ gameId: string }>
@@ -15,10 +16,15 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const game = await findGameBySlugOrId(gameId)
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 })
+    }
+
     // Get open matches (waiting for player 2)
     const lobbies = await prisma.match.findMany({
       where: {
-        gameId,
+        gameId: game.id,
         status: "WAITING",
         player2Id: null,
         isTestMode: false,
@@ -68,10 +74,15 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const game = await findGameBySlugOrId(gameId)
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 })
+    }
+
     // Check if user already has an open lobby for this game
     const existingLobby = await prisma.match.findFirst({
       where: {
-        gameId,
+        gameId: game.id,
         player1Id: session.user.id,
         status: "WAITING",
         isTestMode: false,
@@ -88,7 +99,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Create lobby (match waiting for player 2)
     const lobby = await prisma.match.create({
       data: {
-        gameId,
+        gameId: game.id,
         player1Id: session.user.id,
         isTestMode: false,
         status: "WAITING",

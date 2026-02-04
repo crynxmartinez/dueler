@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { z } from "zod"
 
 const updateRuleCardSchema = z.object({
@@ -50,7 +51,8 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     })
 
-    if (!ruleCard || ruleCard.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!ruleCard || !game || ruleCard.gameId !== game.id) {
       return NextResponse.json({ error: "Rule card not found" }, { status: 404 })
     }
 
@@ -82,7 +84,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       include: { game: { select: { ownerId: true } } },
     })
 
-    if (!existingRule || existingRule.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!existingRule || !game || existingRule.gameId !== game.id) {
       return NextResponse.json({ error: "Rule card not found" }, { status: 404 })
     }
 
@@ -138,7 +141,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       include: { game: { select: { ownerId: true } } },
     })
 
-    if (!existingRule || existingRule.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!existingRule || !game || existingRule.gameId !== game.id) {
       return NextResponse.json({ error: "Rule card not found" }, { status: 404 })
     }
 

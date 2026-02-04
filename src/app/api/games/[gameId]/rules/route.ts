@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { z } from "zod"
 
 const createRuleCardSchema = z.object({
@@ -43,10 +44,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: { ownerId: true },
-    })
+    const game = await findGameBySlugOrId(gameId)
 
     if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 })
@@ -61,7 +59,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     const ruleCards = await prisma.ruleCard.findMany({
       where: {
-        gameId,
+        gameId: game.id,
         ...(category && { category: category as "INIT" | "PER_TURN" | "COMBAT" | "DAMAGE" | "CARD_PLAY" | "ELIGIBILITY" | "WIN_LOSE" | "KEYWORDS" | "CUSTOM" }),
       },
       orderBy: [{ category: "asc" }, { order: "asc" }],
@@ -86,10 +84,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: { ownerId: true },
-    })
+    const game = await findGameBySlugOrId(gameId)
 
     if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 })
@@ -113,7 +108,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     // Get max order for this category
     const maxOrder = await prisma.ruleCard.aggregate({
-      where: { gameId, category },
+      where: { gameId: game.id, category },
       _max: { order: true },
     })
 
@@ -125,7 +120,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         flowData: flowData as object,
         order: order ?? (maxOrder._max.order ?? 0) + 1,
         isEnabled: isEnabled ?? true,
-        gameId,
+        gameId: game.id,
       },
     })
 

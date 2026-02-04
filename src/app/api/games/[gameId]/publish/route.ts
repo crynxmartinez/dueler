@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 
 interface RouteParams {
   params: Promise<{ gameId: string }>
@@ -15,25 +16,23 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      include: {
-        _count: {
-          select: { cards: true },
-        },
-      },
-    })
+    const gameBase = await findGameBySlugOrId(gameId)
 
-    if (!game) {
+    if (!gameBase) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 })
     }
 
-    if (game.ownerId !== session.user.id) {
+    if (gameBase.ownerId !== session.user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
+    const game = await prisma.game.findUnique({
+      where: { id: gameBase.id },
+      include: { _count: { select: { cards: true } } },
+    })
+
     // Validation: require at least some cards
-    if (game._count.cards < 1) {
+    if (!game || game._count.cards < 1) {
       return NextResponse.json(
         { error: "Game must have at least 1 card to publish" },
         { status: 400 }
@@ -41,7 +40,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     const updatedGame = await prisma.game.update({
-      where: { id: gameId },
+      where: { id: gameBase.id },
       data: { isPublic: true },
     })
 
@@ -67,9 +66,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-    })
+    const game = await findGameBySlugOrId(gameId)
 
     if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 })
@@ -80,7 +77,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
 
     const updatedGame = await prisma.game.update({
-      where: { id: gameId },
+      where: { id: game.id },
       data: { isPublic: false },
     })
 

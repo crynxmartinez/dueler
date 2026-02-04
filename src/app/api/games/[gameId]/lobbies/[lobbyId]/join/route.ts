@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { createInitialGameState } from "@/lib/game-engine"
 import { Zone } from "@/types/board"
 
@@ -30,7 +31,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       },
     })
 
-    if (!lobby || lobby.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!lobby || !game || lobby.gameId !== game.id) {
       return NextResponse.json({ error: "Lobby not found" }, { status: 404 })
     }
 
@@ -58,7 +60,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Create initial game state
     const initialState = createInitialGameState({
       matchId: lobby.id,
-      gameId,
+      gameId: game.id,
       player1Id: lobby.player1Id,
       player1Name: player1?.name || "Player 1",
       player2Id: session.user.id,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { GameEngine } from "@/lib/game-engine"
 import { GameState, PlayerNumber } from "@/types/game-state"
 import { EffectFlow } from "@/types/effects"
@@ -30,7 +31,8 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     })
 
-    if (!match || match.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!match || !game || match.gameId !== game.id) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 })
     }
 
@@ -84,7 +86,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       },
     })
 
-    if (!match || match.gameId !== gameId) {
+    const game = await findGameBySlugOrId(gameId)
+    if (!match || !game || match.gameId !== game.id) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 })
     }
 
