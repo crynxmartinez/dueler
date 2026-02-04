@@ -21,8 +21,14 @@ export default async function GameStudioLayout({
     redirect("/login")
   }
 
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
+  // Find by slug or ID
+  const game = await prisma.game.findFirst({
+    where: {
+      OR: [
+        { slug: gameId },
+        { id: gameId },
+      ],
+    },
     include: {
       _count: {
         select: {
