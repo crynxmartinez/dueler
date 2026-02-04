@@ -1,7 +1,7 @@
 "use client"
 
 import { memo } from "react"
-import { Layers, LayoutGrid, Square, Info } from "lucide-react"
+import { Layers, LayoutGrid, Square, Info, MousePointer } from "lucide-react"
 import { Zone, ZoneType, ZONE_OWNER_INFO } from "@/types/board"
 
 const ZONE_ICONS: Record<ZoneType, React.ElementType> = {
@@ -9,6 +9,7 @@ const ZONE_ICONS: Record<ZoneType, React.ElementType> = {
   CARD_GRID: LayoutGrid,
   SINGLE_CARD: Square,
   INFO_DISPLAY: Info,
+  BUTTON: MousePointer,
 }
 
 interface ZoneItemProps {

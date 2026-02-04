@@ -18,9 +18,15 @@ import {
   ZoneType,
   ZoneOwner,
   ZoneVisibility,
+  StackDisplayType,
+  MirrorType,
+  ZoneLayer,
   ZONE_TYPE_INFO,
   ZONE_OWNER_INFO,
   ZONE_VISIBILITY_INFO,
+  STACK_DISPLAY_INFO,
+  MIRROR_TYPE_INFO,
+  ZONE_LAYER_INFO,
 } from "@/types/board"
 
 interface ZonePropertiesPanelProps {
@@ -211,18 +217,72 @@ export function ZonePropertiesPanel({
                 </p>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="mirror">Auto-mirror</Label>
+              {zone.type === "CARD_STACK" && (
+                <div className="space-y-2">
+                  <Label>Stack Display</Label>
+                  <Select
+                    value={zone.stackDisplay || "clickable"}
+                    onValueChange={(v) => onUpdate({ stackDisplay: v as StackDisplayType })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(STACK_DISPLAY_INFO).map(([type, info]) => (
+                        <SelectItem key={type} value={type}>
+                          {info.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground">
-                    Create mirrored zone for opponent
+                    {STACK_DISPLAY_INFO[zone.stackDisplay || "clickable"].description}
                   </p>
                 </div>
-                <Switch
-                  id="mirror"
-                  checked={zone.mirror}
-                  onCheckedChange={(checked) => onUpdate({ mirror: checked })}
-                />
+              )}
+
+              <div className="space-y-2">
+                <Label>Mirror</Label>
+                <Select
+                  value={zone.mirrorType || "none"}
+                  onValueChange={(v) => onUpdate({ mirrorType: v as MirrorType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(MIRROR_TYPE_INFO).map(([type, info]) => (
+                      <SelectItem key={type} value={type}>
+                        {info.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {MIRROR_TYPE_INFO[zone.mirrorType || "none"].description}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Layer</Label>
+                <Select
+                  value={zone.layer || "map"}
+                  onValueChange={(v) => onUpdate({ layer: v as ZoneLayer })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ZONE_LAYER_INFO).map(([type, info]) => (
+                      <SelectItem key={type} value={type}>
+                        {info.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {ZONE_LAYER_INFO[zone.layer || "map"].description}
+                </p>
               </div>
             </div>
           </div>

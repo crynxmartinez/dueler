@@ -47,6 +47,7 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
   const [showTemplateDialog, setShowTemplateDialog] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [mirrorEnabled, setMirrorEnabled] = useState(false)
 
   const selectedZone = zones.find((z) => z.id === selectedZoneId) || null
 
@@ -83,7 +84,10 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
         size: template.size || { width: 100, height: 100 },
         capacity: template.capacity ?? 7,
         visibility: template.visibility || "public",
-        mirror: template.mirror ?? true,
+        color: template.color,
+        stackDisplay: template.stackDisplay,
+        mirrorType: template.mirrorType || "vertical",
+        layer: template.layer || "map",
         properties: {},
       }
 
@@ -163,28 +167,46 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
     setSelectedZoneId(null)
   }, [])
 
-  const handleMirrorZones = useCallback(() => {
-    // Get all player zones and create mirrored opponent zones
-    const playerZones = zones.filter((z) => z.owner === "player")
-    const canvasHeight = settings.canvasHeight
+  const updateMirroredZones = useCallback((playerZones: Zone[], canvasHeight: number) => {
+    // Create mirrored opponent zones from player zones
+    const mirroredZones: Zone[] = playerZones
+      .filter((z) => z.mirrorType && z.mirrorType !== "none")
+      .map((zone) => ({
+        ...zone,
+        id: `mirror_${zone.id}`,
+        name: zone.name.replace(/^(Your |Player )/i, "Opponent "),
+        owner: "opponent" as const,
+        linkedZoneId: zone.id,
+        position: {
+          x: zone.mirrorType === "horizontal" || zone.mirrorType === "both" 
+            ? settings.canvasWidth - zone.position.x - zone.size.width 
+            : zone.position.x,
+          y: zone.mirrorType === "vertical" || zone.mirrorType === "both"
+            ? canvasHeight - zone.position.y - zone.size.height
+            : zone.position.y,
+        },
+      }))
+    return mirroredZones
+  }, [settings.canvasWidth])
 
-    const mirroredZones: Zone[] = playerZones.map((zone) => ({
-      ...zone,
-      id: getZoneId(),
-      name: zone.name.replace(/^(Your |Player )/i, "Opponent "),
-      owner: "opponent" as const,
-      position: {
-        x: zone.position.x,
-        y: canvasHeight - zone.position.y - zone.size.height,
-      },
-    }))
-
-    setZones((prev) => {
-      // Remove existing opponent zones that were mirrored
-      const nonOpponentZones = prev.filter((z) => z.owner !== "opponent")
-      return [...nonOpponentZones, ...mirroredZones]
+  const handleToggleMirror = useCallback(() => {
+    setMirrorEnabled((prev) => {
+      const newEnabled = !prev
+      if (newEnabled) {
+        // Enable mirror - create opponent zones
+        const playerZones = zones.filter((z) => z.owner === "player")
+        const mirroredZones = updateMirroredZones(playerZones, settings.canvasHeight)
+        setZones((prevZones) => {
+          const nonMirroredZones = prevZones.filter((z) => !z.linkedZoneId)
+          return [...nonMirroredZones, ...mirroredZones]
+        })
+      } else {
+        // Disable mirror - remove mirrored opponent zones
+        setZones((prevZones) => prevZones.filter((z) => !z.linkedZoneId))
+      }
+      return newEnabled
     })
-  }, [zones, settings.canvasHeight])
+  }, [zones, settings.canvasHeight, updateMirroredZones])
 
   const handleAddCustomZone = useCallback(
     (template: Partial<Zone>) => {
@@ -197,8 +219,10 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
         size: template.size || { width: 100, height: 100 },
         capacity: template.capacity ?? 7,
         visibility: template.visibility || "public",
-        mirror: template.mirror ?? true,
         color: template.color,
+        stackDisplay: template.stackDisplay,
+        mirrorType: template.mirrorType || "vertical",
+        layer: template.layer || "map",
         properties: {},
       }
 
@@ -250,14 +274,14 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
             </Button>
             <div className="w-px h-6 bg-border mx-1" />
             <Button
-              variant="outline"
+              variant={mirrorEnabled ? "default" : "outline"}
               size="sm"
               className="gap-2"
-              onClick={handleMirrorZones}
-              title="Mirror player zones for opponent (Yu-Gi-Oh style)"
+              onClick={handleToggleMirror}
+              title="Toggle mirror mode - automatically mirrors player zones for opponent"
             >
               <FlipVertical2 className="h-4 w-4" />
-              Mirror
+              {mirrorEnabled ? "Mirror ON" : "Mirror"}
             </Button>
             <Button
               variant="outline"

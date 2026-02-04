@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Layers, LayoutGrid, Square, Info, GripVertical, Plus } from "lucide-react"
+import { Layers, LayoutGrid, Square, Info, GripVertical, Plus, MousePointer } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +29,7 @@ const ZONE_ICONS: Record<ZoneType, React.ElementType> = {
   CARD_GRID: LayoutGrid,
   SINGLE_CARD: Square,
   INFO_DISPLAY: Info,
+  BUTTON: MousePointer,
 }
 
 interface ZonePaletteProps {
@@ -51,9 +52,9 @@ export function ZonePalette({ onDragStart, onAddCustomZone }: ZonePaletteProps) 
       name: customName,
       type: customType,
       size: { width: customWidth, height: customHeight },
-      capacity: customType === "INFO_DISPLAY" ? 0 : customType === "SINGLE_CARD" ? 1 : 7,
+      capacity: customType === "INFO_DISPLAY" || customType === "BUTTON" ? 0 : customType === "SINGLE_CARD" ? 1 : 7,
       visibility: "public",
-      mirror: true,
+      mirrorType: "vertical",
       color: customColor,
     }
     
