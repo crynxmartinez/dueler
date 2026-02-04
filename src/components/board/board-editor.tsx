@@ -64,6 +64,25 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
     e.dataTransfer.dropEffect = "copy"
   }, [])
 
+  const createMirroredZone = useCallback((zone: Zone): Zone | null => {
+    if (!zone.mirrorType || zone.mirrorType === "none") return null
+    return {
+      ...zone,
+      id: `mirror_${zone.id}`,
+      name: zone.name.replace(/^(Your |Player )/i, "Opponent "),
+      owner: "opponent" as const,
+      linkedZoneId: zone.id,
+      position: {
+        x: zone.mirrorType === "horizontal" || zone.mirrorType === "both"
+          ? settings.canvasWidth - zone.position.x - zone.size.width
+          : zone.position.x,
+        y: zone.mirrorType === "vertical" || zone.mirrorType === "both"
+          ? settings.canvasHeight - zone.position.y - zone.size.height
+          : zone.position.y,
+      },
+    }
+  }, [settings.canvasWidth, settings.canvasHeight])
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault()
@@ -91,10 +110,16 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
         properties: {},
       }
 
-      setZones((prev) => [...prev, newZone])
+      // If mirror is enabled, also create the mirrored zone
+      if (mirrorEnabled) {
+        const mirroredZone = createMirroredZone(newZone)
+        setZones((prev) => mirroredZone ? [...prev, newZone, mirroredZone] : [...prev, newZone])
+      } else {
+        setZones((prev) => [...prev, newZone])
+      }
       setSelectedZoneId(newZone.id)
     },
-    [snapToGrid, zoom]
+    [snapToGrid, zoom, mirrorEnabled, createMirroredZone]
   )
 
   const handleZoneDragStart = useCallback(
@@ -117,13 +142,25 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
       const x = snapToGrid((e.clientX - rect.left - dragOffset.x) / zoom)
       const y = snapToGrid((e.clientY - rect.top - dragOffset.y) / zoom)
 
-      setZones((prev) =>
-        prev.map((z) =>
+      setZones((prev) => {
+        const updated = prev.map((z) =>
           z.id === zoneId ? { ...z, position: { x: Math.max(0, x), y: Math.max(0, y) } } : z
         )
-      )
+        
+        // If mirror is enabled and this is a player zone, update its mirrored counterpart
+        if (mirrorEnabled) {
+          const movedZone = updated.find((z) => z.id === zoneId)
+          if (movedZone && movedZone.owner === "player") {
+            const mirroredZone = createMirroredZone(movedZone)
+            if (mirroredZone) {
+              return updated.map((z) => z.id === `mirror_${zoneId}` ? mirroredZone : z)
+            }
+          }
+        }
+        return updated
+      })
     },
-    [snapToGrid, zoom, dragOffset]
+    [snapToGrid, zoom, dragOffset, mirrorEnabled, createMirroredZone]
   )
 
   const handlePaletteDragStart = useCallback(
@@ -135,15 +172,33 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
   )
 
   const handleZoneUpdate = useCallback((zoneId: string, updates: Partial<Zone>) => {
-    setZones((prev) =>
-      prev.map((z) => (z.id === zoneId ? { ...z, ...updates } : z))
-    )
-  }, [])
+    setZones((prev) => {
+      const updated = prev.map((z) => (z.id === zoneId ? { ...z, ...updates } : z))
+      
+      // If mirror is enabled and this is a player zone, update its mirrored counterpart
+      if (mirrorEnabled) {
+        const updatedZone = updated.find((z) => z.id === zoneId)
+        if (updatedZone && updatedZone.owner === "player") {
+          const mirroredZone = createMirroredZone(updatedZone)
+          if (mirroredZone) {
+            return updated.map((z) => z.id === `mirror_${zoneId}` ? mirroredZone : z)
+          }
+        }
+      }
+      return updated
+    })
+  }, [mirrorEnabled, createMirroredZone])
 
   const handleZoneDelete = useCallback((zoneId: string) => {
-    setZones((prev) => prev.filter((z) => z.id !== zoneId))
+    setZones((prev) => {
+      // Also delete the mirrored zone if it exists
+      if (mirrorEnabled) {
+        return prev.filter((z) => z.id !== zoneId && z.id !== `mirror_${zoneId}`)
+      }
+      return prev.filter((z) => z.id !== zoneId)
+    })
     setSelectedZoneId(null)
-  }, [])
+  }, [mirrorEnabled])
 
   const handleSave = useCallback(() => {
     const layout: BoardLayout = {
@@ -226,10 +281,16 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
         properties: {},
       }
 
-      setZones((prev) => [...prev, newZone])
+      // If mirror is enabled, also create the mirrored zone
+      if (mirrorEnabled) {
+        const mirroredZone = createMirroredZone(newZone)
+        setZones((prev) => mirroredZone ? [...prev, newZone, mirroredZone] : [...prev, newZone])
+      } else {
+        setZones((prev) => [...prev, newZone])
+      }
       setSelectedZoneId(newZone.id)
     },
-    [settings.canvasHeight]
+    [settings.canvasHeight, mirrorEnabled, createMirroredZone]
   )
 
   return (
