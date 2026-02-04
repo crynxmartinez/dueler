@@ -360,7 +360,7 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-muted/30 p-4 flex items-start justify-center">
+        <div className="flex-1 overflow-auto bg-muted/30 p-6 flex items-center justify-start">
           <div
             ref={canvasRef}
             className="relative bg-background border-2 border-dashed border-border rounded-lg"
