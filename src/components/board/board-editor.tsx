@@ -220,10 +220,10 @@ export function BoardEditor({ initialLayout, onSave }: BoardEditorProps) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-muted/30 p-4">
+        <div className="flex-1 overflow-auto bg-muted/30 p-4 flex items-start justify-center">
           <div
             ref={canvasRef}
-            className="relative bg-background border-2 border-dashed border-border rounded-lg mx-auto"
+            className="relative bg-background border-2 border-dashed border-border rounded-lg"
             style={{
               width: settings.canvasWidth * zoom,
               height: settings.canvasHeight * zoom,
