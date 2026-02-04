@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { findGameBySlugOrId } from "@/lib/game-helpers"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,8 +27,13 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
   const session = await auth()
   const { gameId } = await params
 
+  const gameBase = await findGameBySlugOrId(gameId)
+  if (!gameBase) {
+    notFound()
+  }
+
   const game = await prisma.game.findUnique({
-    where: { id: gameId },
+    where: { id: gameBase.id },
     include: {
       _count: {
         select: {
@@ -51,7 +57,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
     {
       title: "Cards",
       description: "Create and manage your game's cards",
-      href: `/dashboard/games/${gameId}/cards`,
+      href: `/games/${gameId}/cards`,
       icon: Layers,
       count: game._count.cards,
       color: "text-blue-500",
@@ -59,7 +65,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
     {
       title: "Effects",
       description: "Build reusable effect templates",
-      href: `/dashboard/games/${gameId}/effects`,
+      href: `/games/${gameId}/effects`,
       icon: Zap,
       count: game._count.effects,
       color: "text-yellow-500",
@@ -67,7 +73,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
     {
       title: "Rules",
       description: "Configure game engine rules",
-      href: `/dashboard/games/${gameId}/rules`,
+      href: `/games/${gameId}/rules`,
       icon: ScrollText,
       count: game._count.ruleCards,
       color: "text-purple-500",
@@ -75,7 +81,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
     {
       title: "Board",
       description: "Design your game board layout",
-      href: `/dashboard/games/${gameId}/board`,
+      href: `/games/${gameId}/board`,
       icon: Map,
       count: null,
       color: "text-green-500",
@@ -83,7 +89,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
     {
       title: "Decks",
       description: "Create and test deck builds",
-      href: `/dashboard/games/${gameId}/decks`,
+      href: `/games/${gameId}/decks`,
       icon: Package,
       count: game._count.decks,
       color: "text-orange-500",
@@ -91,7 +97,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
     {
       title: "Keywords",
       description: "Define reusable card abilities",
-      href: `/dashboard/games/${gameId}/keywords`,
+      href: `/games/${gameId}/keywords`,
       icon: Tag,
       count: game._count.keywords,
       color: "text-pink-500",
@@ -99,7 +105,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
     {
       title: "Classes",
       description: "Set up card classes/factions",
-      href: `/dashboard/games/${gameId}/classes`,
+      href: `/games/${gameId}/classes`,
       icon: Users,
       count: game._count.classes,
       color: "text-cyan-500",
@@ -107,7 +113,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
     {
       title: "Sets",
       description: "Organize cards into expansions",
-      href: `/dashboard/games/${gameId}/sets`,
+      href: `/games/${gameId}/sets`,
       icon: FolderOpen,
       count: game._count.cardSets,
       color: "text-indigo-500",
@@ -123,7 +129,7 @@ export default async function GameStudioPage({ params }: GameStudioPageProps) {
             {game.description || "No description yet"}
           </p>
         </div>
-        <Link href={`/dashboard/games/${gameId}/test`}>
+        <Link href={`/games/${gameId}/test`}>
           <Button className="gap-2">
             <Play className="h-4 w-4" />
             Test Play
