@@ -5,13 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Gamepad2, Layers, Users } from "lucide-react"
 
-interface GameWithCount {
-  id: string
-  name: string
-  description: string | null
-  isPublic: boolean
-  _count: { cards: number }
-}
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -110,7 +103,7 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {recentGames.map((game: GameWithCount) => (
+            {recentGames.map((game) => (
               <Link key={game.id} href={`/dashboard/games/${game.id}`}>
                 <Card className="hover:border-primary transition-colors cursor-pointer">
                   <CardHeader>
